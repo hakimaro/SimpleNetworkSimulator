@@ -1,12 +1,12 @@
-#include "ue.h"
+#include "LTE.h"
 
-UE::UE(Point position) :
+LTE::UE::UE(Point position) :
     m_position(position)
 {
 
 }
 
-double UE::calculate_throughput()
+void LTE::UE::move(double speed, double Q, double dt)
 {
 
 }

@@ -9,8 +9,9 @@ add_executable(NetworkSimulator
     main.cpp
     settings.h
     LTE.h
-    ue.h
     ue.cpp
+    modulation.h
+    basestation.cpp
 )
 
 install(TARGETS NetworkSimulator

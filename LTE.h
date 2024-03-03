@@ -1,11 +1,64 @@
 #ifndef LTE_H
 #define LTE_H
 
+#include <cmath>
+#include <stdint.h>
+#include <list>
+
+struct Point {
+    double x, y;
+
+    Point(double x, double y):
+        x(x), y(y)
+    { }
+
+    Point(Point *point):
+        x(point->x), y(point->y)
+    { }
+
+    static double distance(Point p1, Point p2) {
+        using namespace std;
+        return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
+    }
+};
+
+
 namespace LTE {
     // Для формулы вычисления средней скорости.
-    const double time_window = 1;
+    constexpr double time_window = 1;
+
+    // https://itechinfo.ru/content/cкорость-мобильного-интернета
+    constexpr float slot_in_ms = 0.5;             // Время слота в мс
+    constexpr float subframe_in_ms = 1;           // Время подфрейма (подкадра) в мс
+    constexpr float frame_in_ms = 10;             // Время фрейма (кадра) в мс
+    constexpr uint8_t number_of_subcarriers = 12; // Количество поднесущих
+
+    // Разделение канала
+    enum class ChannelSeparation {
+        TDD, // частотное разделение канала
+        FDD  // временное разделение канала
+    };
+
+    typedef enum class SubframeType {
+        D,  // нисходящий
+        U,  // восходящий
+        S   // специальный (при смене DL->UL)
+    } ST;
+
+    // https://itechinfo.ru/content/cкорость-мобильного-интернета
+    constexpr SubframeType TDD_configuration[7][10] = {
+        {ST::D, ST::S, ST::U, ST::U, ST::U, ST::D, ST::S, ST::U, ST::U, ST::U}, // соотношение UL:DL == 3:1, период переключения: 5мс
+        {ST::D, ST::S, ST::U, ST::U, ST::D, ST::D, ST::S, ST::U, ST::U, ST::D}, // соотношение UL:DL == 1:1, период переключения: 5мс
+        {ST::D, ST::S, ST::U, ST::D, ST::D, ST::D, ST::S, ST::U, ST::D, ST::D}, // соотношение UL:DL == 1:3, период переключения: 5мс
+        {ST::D, ST::S, ST::U, ST::U, ST::U, ST::D, ST::D, ST::D, ST::D, ST::D}, // соотношение UL:DL == 1:2, период переключения: 10мс
+        {ST::D, ST::S, ST::U, ST::U, ST::D, ST::D, ST::D, ST::D, ST::D, ST::D}, // соотношение UL:DL == 2:7, период переключения: 10мс
+        {ST::D, ST::S, ST::U, ST::D, ST::D, ST::D, ST::D, ST::D, ST::D, ST::D}, // соотношение UL:DL == 1:8, период переключения: 10мс
+        {ST::D, ST::S, ST::U, ST::U, ST::U, ST::D, ST::S, ST::U, ST::U, ST::D}, // соотношение UL:DL == 5:3, период переключения: 5мс
+    };
 
     // Количество транспортных блоков, передающихся за 1мс
+    // На самом деле тут примерные значения, так как здесь для удобства счета один ресурсный блок занимает не 180 КГц, а 200КГц.
+    // В будущем можно от этого избавиться в пользу нормального рассчета количества ресурных блоков.
     typedef enum class Bandwidth {
         MHz1_4 = 6,
         MHz3 = 15,
@@ -15,19 +68,19 @@ namespace LTE {
         MHz20 = 100
     } NumberOfResourceBlocks;
 
-    // Типа модуляции
-    enum class Modulation {
+    // Тип модуляции
+    typedef enum class Modulation {
         QPSK = 2,
         QAM16 = 4,
         QAM64 = 6,
         QAM256 = 8
-    };
+    } NumberOfBitsPerSignal;
 
     // Пара значений модуляции и количества блоков в 1мс
     // Можно было и через std::pair, но тогда было бы попросту неудобно
     struct MCS {
-        Modulation modulation;
-        int TBS_index;
+        const Modulation modulation;
+        const int TBS_index;
 
         MCS(Modulation modulation, int TBS) :
             modulation(modulation), TBS_index(TBS) {}
@@ -68,7 +121,33 @@ namespace LTE {
         MCS(Modulation::QAM64, 26)
     };
 
+    enum class SHEDULLER { RR };
 
+    // Класс для определения абонента
+    class UE
+    {
+    public:
+        UE(Point position);
+
+        // скорость, азимут, время
+        void move(double speed, double Q, double dt);
+
+    private:
+        Point m_position;
+
+        double m_last_average_throughput_in_bytes = 0;
+        double m_current_sending_speed_in_bytes = 0;
+    };
+
+    // Класс для определения базовой станции
+    class BaseStation {
+    public:
+        BaseStation(LTE::Bandwidth bandwidth);
+
+        void allocate_resources(std::list<UE*> abonents);
+
+        const MCS calculate_MCS(double distance);
+    };
 }
 
 
