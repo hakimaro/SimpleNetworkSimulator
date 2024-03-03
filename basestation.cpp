@@ -1,14 +1,62 @@
-
 #include "LTE.h"
+#include <iostream>
 
 LTE::BaseStation::BaseStation(LTE::Bandwidth bandwidth)
 {
-
+    m_total_RB = bandwidth;
 }
 
 void LTE::BaseStation::allocate_resources(std::list<UE *> abonents)
 {
+    int index_of_UE_to_send = 1;
 
+    LTE::UE *ue_to_send;
+    uint64_t min_speed = -1;
+
+    // Вычисление абонента, которому выделят ресурс
+    for (auto ue : abonents) {
+        if (ue->average_speed() < min_speed) {
+            min_speed = ue->average_speed();
+            index_of_UE_to_send = ue->id();
+        }
+    }
+
+    // Выделение ресурса
+    for (auto ue : abonents) {
+        //std::cout << ue_mcs.TBS_index << " " << (uint64_t) m_total_RB << " " << LTE::TB_size_table[ue_mcs.TBS_index][(uint64_t) m_total_RB - 1] / 8 << std::endl;
+        if (ue->id() != index_of_UE_to_send) {
+            ue->set_current_speed(0);
+        } else {
+            LTE::MCS ue_mcs = calculate_MCS(Point::distance(m_position, ue->position()));
+            ue->set_current_speed(LTE::TB_size_table[ue_mcs.TBS_index][((uint64_t) (m_total_RB) - 1) / abonents.size()]);
+        }
+
+        if (type_of_calculation == LTE::AverageSpeedCalculation::BRUTE_FORCE) {
+            ue->append_last_speed(); // Добавить скорость в вектор значений скоростей
+        }
+    }
+
+    // Пересчет средней скорости
+    for (auto ue : abonents) {
+        if (ue->average_speed() == 0) {
+            ue->set_average_speed(ue->current_speed());
+        } else {
+            switch(type_of_calculation) {
+            case LTE::AverageSpeedCalculation::FAST:
+                ue->set_average_speed((ue->average_speed() * LTE::beta) + (ue->current_speed() * (1-LTE::beta)));
+                break;
+
+            case LTE::AverageSpeedCalculation::BRUTE_FORCE:
+                double average_speed = 0;
+                std::vector<uint64_t> all_speeds = ue->all_speeds();
+                for (int i = 0; i < all_speeds.size(); ++i) {
+                    average_speed += (double) all_speeds[i] / all_speeds.size();
+                }
+                ue->set_average_speed(average_speed);
+                break;
+            }
+        }
+    }
 }
 
 const LTE::MCS LTE::BaseStation::calculate_MCS(double distance)
