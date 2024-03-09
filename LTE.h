@@ -25,8 +25,9 @@ struct Point {
 };
 
 namespace LTE {
-    // Для формулы вычисления средней скорости.
-    constexpr double beta = 0.99; // Коэффициент забывания
+    // Для формулы вычисления средней скорости.    
+    constexpr double window_time = 99;
+    constexpr double beta = 1.0 - 1.0/window_time; // Коэффициент забывания
 
     // https://itechinfo.ru/content/cкорость-мобильного-интернета
     constexpr float slot_in_ms = 0.5;             // Время слота в мс
@@ -192,16 +193,20 @@ namespace LTE {
         std::vector<uint64_t> all_speeds() const;
         void append_last_speed();
 
+        double total_speed_to_count_average() const;
+
     private:
         std::vector<uint64_t> m_all_speeds;
 
         std::ofstream m_fout;
         uint64_t m_total_speed = 0;
 
+        double m_total_speed_to_count_average = 0;
+
         uint16_t m_id = 0;
         Point m_position;
 
-        double m_average_speed = 0;        // Средняя скорость
+        double m_average_speed = 0;  // Средняя скорость
         double m_current_speed = 0;  // Текущая скорость
     };
 
@@ -219,6 +224,12 @@ namespace LTE {
         NumberOfResourceBlocks m_total_RB = Bandwidth::MHz5;
         LTE::AverageSpeedCalculation type_of_calculation = LTE::AverageSpeedCalculation::BRUTE_FORCE;
     };
+
+    inline double UE::total_speed_to_count_average() const
+    {
+        return m_total_speed_to_count_average;
+    }
+
 }
 
 

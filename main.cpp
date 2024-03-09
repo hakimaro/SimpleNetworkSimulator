@@ -11,7 +11,7 @@ int main()
 //        cout << "Modulation: " << (int) LTE::MCS_table[i].modulation << " | TBS: " << LTE::MCS_table[i].TBS_index << endl;
 //    }
 
-    start_modulation(10);
+    start_modulation(100);
 
     return 0;
 }

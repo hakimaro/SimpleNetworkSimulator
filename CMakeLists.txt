@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(NetworkSimulator
     main.cpp
-    settings.h
     LTE.h
     ue.cpp
     modulation.h
