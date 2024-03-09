@@ -9,8 +9,6 @@ LTE::BaseStation::BaseStation(LTE::Bandwidth bandwidth)
 void LTE::BaseStation::allocate_resources(std::list<UE *> abonents)
 {
     int index_of_UE_to_send = 1;
-
-    LTE::UE *ue_to_send;
     uint64_t min_speed = -1;
 
     // Вычисление абонента, которому выделят ресурс
@@ -28,7 +26,7 @@ void LTE::BaseStation::allocate_resources(std::list<UE *> abonents)
             ue->set_current_speed(0);
         } else {
             LTE::MCS ue_mcs = calculate_MCS(Point::distance(m_position, ue->position()));
-            ue->set_current_speed(LTE::TB_size_table[ue_mcs.TBS_index][((uint64_t) (m_total_RB) - 1) / abonents.size()]);
+            ue->set_current_speed(LTE::TB_size_table[ue_mcs.TBS_index][((uint64_t) (m_total_RB) - 1)]);
         }
 
         if (type_of_calculation == LTE::AverageSpeedCalculation::BRUTE_FORCE) {
@@ -71,14 +69,16 @@ const LTE::MCS LTE::BaseStation::calculate_MCS(double distance)
         return MCS_table[22];
     } else if (distance < 7000) {
         return MCS_table[20];
-    } else if (distance < 9000) {
+    } else if (distance < 8250) {
         return MCS_table[18];
     } else if (distance < 10000) {
         return MCS_table[16];
     } else if (distance < 15000) {
         return MCS_table[14];
-    } else if (distance < 20000) {
+    } else if (distance < 17000) {
         return MCS_table[12];
+    } else if (distance < 19350) {
+        return MCS_table[10];
     } else if (distance < 30000) {
         return MCS_table[8];
     } else if (distance < 40000) {

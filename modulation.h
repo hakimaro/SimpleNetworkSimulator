@@ -11,20 +11,19 @@ void start_modulation(uint32_t total_work_time_in_s) {
     uint64_t total_work_time_in_ms = total_work_time_in_s * 1000;
     uint8_t current_configuration = 7;
 
-
     std::list<LTE::UE*> UEs;
-    for(int i = 0; i < 5; ++i) {
-        LTE::UE *UE = new LTE::UE(i, Point(rand() % 50000, 0));
-        UEs.push_back(UE);
-    }
+//    for(int i = 0; i < 5; ++i) {
+//        LTE::UE *UE = new LTE::UE(i, Point(rand() % 50000, 0));
+//        UEs.push_back(UE);
+//    }
 
 
-    //    LTE::UE *UE1 = new LTE::UE(1, Point(1000, 0));
-    //    LTE::UE *UE2 = new LTE::UE(2, Point(1000, 0));
-    //    LTE::UE *UE3 = new LTE::UE(3, Point(40000, 0));
-    //    UEs.push_back(UE1);
-    //    UEs.push_back(UE2);
-    //   /UEs.push_back(UE3);
+    LTE::UE *UE1 = new LTE::UE(1, Point(1000, 0));
+    LTE::UE *UE2 = new LTE::UE(2, Point(19000, 0));
+    LTE::UE *UE3 = new LTE::UE(3, Point(40000, 0));
+    UEs.push_back(UE1);
+    UEs.push_back(UE2);
+    UEs.push_back(UE3);
 
     LTE::BaseStation *station = new LTE::BaseStation(LTE::Bandwidth::MHz5);
 
@@ -34,17 +33,20 @@ void start_modulation(uint32_t total_work_time_in_s) {
         for (auto UE : UEs) {
             UE->set_total_speed(UE->total_speed() + UE->current_speed());
 
-            if (current_tti % 1000 == 0) {
-                UE->write_total_speed(current_tti / 1000);
+            if (current_tti % 1 == 0) {
+                UE->write_total_speed(current_tti / 1);
             }
 
-            // Движение абонента. 2-й параметр - это АЗИМУТ[!]. 0 градусов - это север, 90 градусов - восток (справа), 180 - юг, 270 - запад (слева)
-//            if (UE->id() == 2) {
-//                UE->move(25, 90.0 / 180.0 * 3.14, 0.001);
-//            }
+            //
+            if (UE->id() == 2 && current_tti / 1000 <= 60) {
+                UE->move(8, 90.0 / 180.0 * 3.14, 0.001);
+            }
         }
     }
 
+    for (auto UE : UEs) {
+        std::cout << UE->id() << " " << UE->total_speed_to_count_average() / total_work_time_in_s << std::endl;
+    }
 
     std::string filename = "UE=";
     filename += std::to_string(UEs.size());

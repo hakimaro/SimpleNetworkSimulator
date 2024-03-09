@@ -13,8 +13,8 @@ LTE::UE::UE(uint16_t id, Point position) :
 
 void LTE::UE::move(double speed, double Q, double dt)
 {
-    m_position.x += speed * sin(Q) * dt;
-    m_position.y += speed * cos(Q) * dt;
+    m_position.x += speed * dt;
+    //m_position.y += speed * cos(Q) * dt;
 }
 
 
@@ -60,7 +60,8 @@ void LTE::UE::set_total_speed(uint64_t newTotal_speed)
 
 void LTE::UE::write_total_speed(uint64_t time_in_s)
 {
-    m_fout << time_in_s << " " << (double) m_total_speed / (1024*1024*8) << std::endl;
+    m_fout << time_in_s << " " << (double) m_total_speed / (1024*8*1024) << std::endl;
+    m_total_speed_to_count_average += (double) m_total_speed / (1024*8*1024);
     m_total_speed = 0;
 }
 
@@ -76,5 +77,7 @@ std::vector<uint64_t> LTE::UE::all_speeds() const
 
 void LTE::UE::append_last_speed()
 {
+    if (m_all_speeds.size() >= LTE::window_time)
+        m_all_speeds.erase(m_all_speeds.begin());
     m_all_speeds.push_back(m_current_speed);
 }
